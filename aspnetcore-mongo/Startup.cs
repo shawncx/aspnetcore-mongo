@@ -58,8 +58,7 @@ namespace aspnetcore_mongo
 
         private static CosmosDbService InitializeCosmosClientInstanceAsync()
         {
-            string connectionString = "mongodb://servicelinker-mongo-cosmos:yfGJReUhruM0ySqXeFLoInOlwBO9MoBnjoE9HdNHq54PkPSIA0iNPSWw8SlDG0S1yRrJtG0b7izKZAybXv9Hdw==@servicelinker-mongo-cosmos.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb&maxIdleTimeMS=120000&appName=@servicelinker-mongo-cosmos@";
-            //string connectionString = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_MYCONN_CONNSTR");
+            string connectionString = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_MYCONN_CONNSTR");
             CosmosDbService cosmosDbService = new CosmosDbService(connectionString);
             return cosmosDbService;
         }
