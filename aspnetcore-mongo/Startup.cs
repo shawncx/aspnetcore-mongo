@@ -6,6 +6,8 @@ using aspnetcore_mongo.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -61,6 +63,12 @@ namespace aspnetcore_mongo
             string connectionString = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOSECRETCONNECTIONSUCCEEDED_CONNECTIONSTRING");
             CosmosDbService cosmosDbService = new CosmosDbService(connectionString);
             return cosmosDbService;
+        }
+
+        private static string GetAccessToken(string scope)
+        {
+            var azureServiceTokenProvider = new AzureServiceTokenProvider();
+            CosmosClient client = new CosmosClient();
         }
     }
 }
