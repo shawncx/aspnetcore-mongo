@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using aspnetcore_mongo.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Management.CosmosDB.Models;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,15 +63,31 @@ namespace aspnetcore_mongo
 
         private static CosmosDbService InitializeCosmosClientInstanceAsync()
         {
-            string connectionString = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOSECRETCONNECTIONSUCCEEDED_CONNECTIONSTRING");
-            CosmosDbService cosmosDbService = new CosmosDbService(connectionString);
-            return cosmosDbService;
-        }
+            string subscriptionId = "937bc588-a144-4083-8612-5f9ffbbddb14";
+            string resourceGroupName = "servicelinker-test-win-group";
+            string accountName = "servicelinker-mongo-cosmos";
 
-        private static string GetAccessToken(string scope)
-        {
+            string resourceEndpoint = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOMSICONNECTIONSUCCEEDED_RESOURCEENDPOINT");
+            string scope = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOMSICONNECTIONSUCCEEDED_SCOPE");
+
             var azureServiceTokenProvider = new AzureServiceTokenProvider();
-            CosmosClient client = new CosmosClient();
+            string accessToken = azureServiceTokenProvider.GetAccessTokenAsync(scope).Result;
+
+            string endpoint = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/listConnectionStrings?api-version=2019-12-12";
+            HttpClient httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            HttpResponseMessage result = httpClient.PostAsync(endpoint, new StringContent("")).Result;
+            DatabaseAccountListConnectionStringsResult connStrResult = result.Content.ReadAsAsync<DatabaseAccountListConnectionStringsResult>().Result;
+
+            foreach (DatabaseAccountConnectionString connStr in connStrResult.ConnectionStrings)
+            {
+                if (connStr.Description.Contains("Primary") && connStr.Description.Contains("MongoDB"))
+                {
+                    return new CosmosDbService(connStr.ConnectionString);
+                }
+            }
+            return null;
         }
     }
 }
