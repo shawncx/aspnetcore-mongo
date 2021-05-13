@@ -5,6 +5,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using aspnetcore_mongo.Services;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -70,8 +72,7 @@ namespace aspnetcore_mongo
             string resourceEndpoint = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOMSICONNECTIONSUCCEEDED_RESOURCEENDPOINT");
             string scope = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOMSICONNECTIONSUCCEEDED_SCOPE");
 
-            var azureServiceTokenProvider = new AzureServiceTokenProvider();
-            string accessToken = azureServiceTokenProvider.GetAccessTokenAsync(scope).Result;
+            string accessToken = GetAccessTokenByMsIdentity(scope);
 
             string endpoint = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/listConnectionStrings?api-version=2019-12-12";
             HttpClient httpClient = new HttpClient();
@@ -89,5 +90,23 @@ namespace aspnetcore_mongo
             }
             return null;
         }
+
+        private static string GetAccessTokenByMsIdentity(string scope)
+        {
+            ManagedIdentityCredential cred = new ManagedIdentityCredential();
+            TokenRequestContext reqContext = new TokenRequestContext(new string[] { scope });
+            AccessToken token = cred.GetTokenAsync(reqContext).Result;
+            return token.Token;
+        }
+
+
+        // Legacy
+        private static string GetAccessTokenByAppAuthentication(string scope)
+        {
+            var azureServiceTokenProvider = new AzureServiceTokenProvider();
+            return azureServiceTokenProvider.GetAccessTokenAsync(scope).Result;
+        }
+
+
     }
 }
