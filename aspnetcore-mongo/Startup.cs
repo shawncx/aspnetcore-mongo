@@ -69,8 +69,8 @@ namespace aspnetcore_mongo
             string resourceGroupName = "servicelinker-test-win-group";
             string accountName = "servicelinker-mongo-cosmos";
 
-            string resourceEndpoint = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOMSICONNECTIONSUCCEEDED_RESOURCEENDPOINT");
-            string scope = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOMSICONNECTIONSUCCEEDED_SCOPE");
+            string resourceEndpoint = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOSYSTEMASSIGNEDMICONNECTIONSUCCEEDED_RESOURCEENDPOINT");
+            string scope = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOSYSTEMASSIGNEDMICONNECTIONSUCCEEDED_SCOPE");
 
             string accessToken = GetAccessTokenByMsIdentity(scope);
 
