@@ -71,9 +71,11 @@ namespace aspnetcore_mongo
 
             string resourceEndpoint = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_RESOURCEENDPOINT");
             string scope = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_SCOPE");
+            string tenentId = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
             string clientId = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
+            string clientSecret = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
 
-            string accessToken = GetAccessTokenByMsIdentity(scope, clientId);
+            string accessToken = GetAccessTokenByMsIdentity(scope, tenentId, clientId, clientSecret);
 
             string endpoint = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/listConnectionStrings?api-version=2019-12-12";
             HttpClient httpClient = new HttpClient();
@@ -92,20 +94,12 @@ namespace aspnetcore_mongo
             return null;
         }
 
-        private static string GetAccessTokenByMsIdentity(string scope, string clientId)
+        private static string GetAccessTokenByMsIdentity(string scope, string tenentId, string clientId, string secret)
         {
-            ManagedIdentityCredential cred = new ManagedIdentityCredential(clientId);
+            ClientSecretCredential cred = new ClientSecretCredential(tenentId, clientId, secret);
             TokenRequestContext reqContext = new TokenRequestContext(new string[] { scope });
             AccessToken token = cred.GetTokenAsync(reqContext).Result;
             return token.Token;
-        }
-
-
-        // Legacy
-        private static string GetAccessTokenByAppAuthentication(string scope)
-        {
-            var azureServiceTokenProvider = new AzureServiceTokenProvider();
-            return azureServiceTokenProvider.GetAccessTokenAsync(scope).Result;
         }
 
 
