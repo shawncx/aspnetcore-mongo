@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -73,9 +74,9 @@ namespace aspnetcore_mongo
             string scope = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_SCOPE");
             string tenentId = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
             string clientId = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
-            string clientSecret = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
+            string clientCert = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
 
-            string accessToken = GetAccessTokenByMsIdentity(scope, tenentId, clientId, clientSecret);
+            string accessToken = GetAccessTokenByAzureIdentity(scope, tenentId, clientId, clientCert);
 
             string endpoint = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/listConnectionStrings?api-version=2019-12-12";
             HttpClient httpClient = new HttpClient();
@@ -94,12 +95,43 @@ namespace aspnetcore_mongo
             return null;
         }
 
-        private static string GetAccessTokenByMsIdentity(string scope, string tenentId, string clientId, string secret)
+        private static string GetAccessTokenByAzureIdentity(string scope, string tenentId, string clientId, string clientCert)
         {
-            ClientSecretCredential cred = new ClientSecretCredential(tenentId, clientId, secret);
-            TokenRequestContext reqContext = new TokenRequestContext(new string[] { scope });
-            AccessToken token = cred.GetTokenAsync(reqContext).Result;
-            return token.Token;
+            // Write cert to local
+            string filename = WriteCert(clientCert);
+            try
+            {
+                ClientCertificateCredential cred = new ClientCertificateCredential(tenentId, clientId, filename);
+                TokenRequestContext reqContext = new TokenRequestContext(new string[] { scope });
+                AccessToken token = cred.GetTokenAsync(reqContext).Result;
+                return token.Token;
+            }
+            finally
+            {
+                if (File.Exists(filename))
+                {
+                    File.Delete(filename);
+                }
+            }
+        }
+
+        private static string WriteCert(string certContent)
+        {
+            string filename = $"{Guid.NewGuid().ToString()}.pfx";
+            byte[] bytes = Convert.FromBase64String(certContent);
+            File.WriteAllBytes(filename, bytes);
+            return filename;
+        }
+
+        /// <summary>
+        /// Helper method to read pfx file
+        /// </summary>
+        /// <param name="pfxFilename"></param>
+        /// <returns></returns>
+        private static string ReadCert(string pfxFilename)
+        {
+            byte[] cert = File.ReadAllBytes(pfxFilename);
+            return Convert.ToBase64String(cert);
         }
 
 
