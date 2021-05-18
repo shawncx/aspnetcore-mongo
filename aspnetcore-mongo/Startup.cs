@@ -69,13 +69,15 @@ namespace aspnetcore_mongo
             string resourceGroupName = "servicelinker-test-win-group";
             string accountName = "servicelinker-mongo-cosmos";
 
-            string resourceEndpoint = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_RESOURCEENDPOINT");
-            string scope = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_SCOPE");
-            string tenentId = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
-            string clientId = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
-            string clientSecret = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
+            string linkerName = "TESTMONGOSERVICEPRINCIPALSECRETCONNECTIONSUCCEEDED";
 
-            string accessToken = GetAccessTokenByMsIdentity(scope, tenentId, clientId, clientSecret);
+            string resourceEndpoint = Environment.GetEnvironmentVariable($"RESOURCECONNECTOR_{linkerName}_RESOURCEENDPOINT");
+            string scope = Environment.GetEnvironmentVariable($"RESOURCECONNECTOR_{linkerName}_SCOPE");
+            string tenentId = Environment.GetEnvironmentVariable($"RESOURCECONNECTOR_{linkerName}_TENANTID");
+            string clientId = Environment.GetEnvironmentVariable($"RESOURCECONNECTOR_{linkerName}_CLIENTID");
+            string clientSecret = Environment.GetEnvironmentVariable($"RESOURCECONNECTOR_{linkerName}_CLIENTSECRET");
+
+            string accessToken = GetAccessTokenByAzureIdentity(scope, tenentId, clientId, clientSecret);
 
             string endpoint = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/listConnectionStrings?api-version=2019-12-12";
             HttpClient httpClient = new HttpClient();
@@ -94,7 +96,7 @@ namespace aspnetcore_mongo
             return null;
         }
 
-        private static string GetAccessTokenByMsIdentity(string scope, string tenentId, string clientId, string secret)
+        private static string GetAccessTokenByAzureIdentity(string scope, string tenentId, string clientId, string secret)
         {
             ClientSecretCredential cred = new ClientSecretCredential(tenentId, clientId, secret);
             TokenRequestContext reqContext = new TokenRequestContext(new string[] { scope });
