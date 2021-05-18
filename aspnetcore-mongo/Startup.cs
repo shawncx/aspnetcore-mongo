@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using aspnetcore_mongo.Services;
 using Azure.Core;
@@ -70,11 +71,13 @@ namespace aspnetcore_mongo
             string resourceGroupName = "servicelinker-test-win-group";
             string accountName = "servicelinker-mongo-cosmos";
 
-            string resourceEndpoint = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_RESOURCEENDPOINT");
-            string scope = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_SCOPE");
-            string tenentId = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
-            string clientId = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
-            string clientCert = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOUSERASSIGNEDIDENTITYCONNECTIONSUCCEEDED_CLIENTID");
+            string linkerName = "TESTMONGOSERVICEPRINCIPALCERTCONNECTIONSUCCEEDED";
+
+            string resourceEndpoint = Environment.GetEnvironmentVariable($"RESOURCECONNECTOR_{linkerName}_RESOURCEENDPOINT");
+            string scope = Environment.GetEnvironmentVariable($"RESOURCECONNECTOR_{linkerName}_SCOPE");
+            string tenentId = Environment.GetEnvironmentVariable($"RESOURCECONNECTOR_{linkerName}_TENANTID");
+            string clientId = Environment.GetEnvironmentVariable($"RESOURCECONNECTOR_{linkerName}_CLIENTID");
+            string clientCert = Environment.GetEnvironmentVariable($"RESOURCECONNECTOR_{linkerName}_CLIENTCERT");
 
             string accessToken = GetAccessTokenByAzureIdentity(scope, tenentId, clientId, clientCert);
 
@@ -97,30 +100,12 @@ namespace aspnetcore_mongo
 
         private static string GetAccessTokenByAzureIdentity(string scope, string tenentId, string clientId, string clientCert)
         {
-            // Write cert to local
-            string filename = WriteCert(clientCert);
-            try
-            {
-                ClientCertificateCredential cred = new ClientCertificateCredential(tenentId, clientId, filename);
-                TokenRequestContext reqContext = new TokenRequestContext(new string[] { scope });
-                AccessToken token = cred.GetTokenAsync(reqContext).Result;
-                return token.Token;
-            }
-            finally
-            {
-                if (File.Exists(filename))
-                {
-                    File.Delete(filename);
-                }
-            }
-        }
-
-        private static string WriteCert(string certContent)
-        {
-            string filename = $"{Guid.NewGuid().ToString()}.pfx";
-            byte[] bytes = Convert.FromBase64String(certContent);
-            File.WriteAllBytes(filename, bytes);
-            return filename;
+            byte[] bs = Convert.FromBase64String(clientCert);
+            X509Certificate2 cert = new X509Certificate2(Convert.FromBase64String(clientCert), (string)null, X509KeyStorageFlags.EphemeralKeySet | X509KeyStorageFlags.MachineKeySet);
+            ClientCertificateCredential cred = new ClientCertificateCredential(tenentId, clientId, cert);
+            TokenRequestContext reqContext = new TokenRequestContext(new string[] { scope });
+            AccessToken token = cred.GetTokenAsync(reqContext).Result;
+            return token.Token;
         }
 
         /// <summary>
