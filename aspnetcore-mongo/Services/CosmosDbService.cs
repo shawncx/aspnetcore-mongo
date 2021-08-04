@@ -14,9 +14,7 @@ namespace aspnetcore_mongo.Services
 
         public CosmosDbService(string connectionString)
         {
-            MongoClientSettings settings = MongoClientSettings.FromUrl(new MongoUrl(connectionString));
-            settings.SslSettings = new SslSettings() { EnabledSslProtocols = SslProtocols.Tls12 };
-            _client = new MongoClient(settings);
+            _client = new MongoClient(connectionString);
             _collection = _client.GetDatabase("coreDB").GetCollection<MyItem>("MyItem");
         }
 
