@@ -65,20 +65,17 @@ namespace aspnetcore_mongo
 
         private static CosmosDbService InitializeCosmosClientInstanceAsync()
         {
-            string subscriptionId = "937bc588-a144-4083-8612-5f9ffbbddb14";
-            string resourceGroupName = "servicelinker-test-win-group";
-            string accountName = "servicelinker-mongo-cosmos";
+            string connectionName = "<Your connection name>";
 
-            string resourceEndpoint = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOSYSTEMASSIGNEDMICONNECTIONSUCCEEDED_RESOURCEENDPOINT");
-            string scope = Environment.GetEnvironmentVariable("RESOURCECONNECTOR_TESTMONGOSYSTEMASSIGNEDMICONNECTIONSUCCEEDED_SCOPE");
+            string scope = Environment.GetEnvironmentVariable($"AZURE_{connectionName}_SCOPE");
+            string listConnStrUrl = Environment.GetEnvironmentVariable($"AZURE_{connectionName}_LISTCONNECTIONSTRINGURL");
 
             string accessToken = GetAccessTokenByMsIdentity(scope);
 
-            string endpoint = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.DocumentDB/databaseAccounts/{accountName}/listConnectionStrings?api-version=2019-12-12";
             HttpClient httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            HttpResponseMessage result = httpClient.PostAsync(endpoint, new StringContent("")).Result;
+            HttpResponseMessage result = httpClient.PostAsync(listConnStrUrl, new StringContent("")).Result;
             DatabaseAccountListConnectionStringsResult connStrResult = result.Content.ReadAsAsync<DatabaseAccountListConnectionStringsResult>().Result;
 
             foreach (DatabaseAccountConnectionString connStr in connStrResult.ConnectionStrings)
@@ -97,14 +94,6 @@ namespace aspnetcore_mongo
             TokenRequestContext reqContext = new TokenRequestContext(new string[] { scope });
             AccessToken token = cred.GetTokenAsync(reqContext).Result;
             return token.Token;
-        }
-
-
-        // Legacy
-        private static string GetAccessTokenByAppAuthentication(string scope)
-        {
-            var azureServiceTokenProvider = new AzureServiceTokenProvider();
-            return azureServiceTokenProvider.GetAccessTokenAsync(scope).Result;
         }
 
 
