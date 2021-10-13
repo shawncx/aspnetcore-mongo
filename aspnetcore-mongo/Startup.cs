@@ -65,10 +65,8 @@ namespace aspnetcore_mongo
 
         private static CosmosDbService InitializeCosmosClientInstanceAsync()
         {
-            string connectionName = "<Your connection name>";
-
-            string scope = Environment.GetEnvironmentVariable($"AZURE_{connectionName}_SCOPE");
-            string listConnStrUrl = Environment.GetEnvironmentVariable($"AZURE_{connectionName}_LISTCONNECTIONSTRINGURL");
+            string scope = Environment.GetEnvironmentVariable($"AZURE_COSMOS_SCOPE");
+            string listConnStrUrl = Environment.GetEnvironmentVariable($"AZURE_COSMOS_LISTCONNECTIONSTRINGURL");
 
             string accessToken = GetAccessTokenByMsIdentity(scope);
 
